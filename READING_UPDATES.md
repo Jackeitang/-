@@ -1,0 +1,18 @@
+# AI Daily Reading: unattended updates
+
+The owner requested one influential AI event as an English reading each day, with Chinese support. The Site remains owner-private. Routine updates change R2 data, without republishing application code.
+
+## Source discovery and selection
+Search the current web (prefer fresh searches within 24–48 hours, extend to 7 days when necessary). Compare at least three candidate events. Prefer official announcements, research institutions and reliable reporting. Choose one event using real-world impact, breadth of effect, novelty and evidence. Do not describe the selection as an objective global ranking. Check event dates separately from publication dates. Do not repeat recent editions unless there is a substantive development. Read previous editions through the API's current article; if no suitable verified news exists, retain the current edition and report no update rather than fabricate news or change its date.
+
+Write an original A2–B1 English learning summary, generally 150–300 words (shorten as necessary to honor source word limits), not a copied article. Provide accurate Chinese translations, 5–8 vocabulary items, 2–3 comprehension questions, verified HTTPS source links, a brief Chinese selection reason, and publication/event dates. Attribute claims and distinguish plans, company claims and completed events. Do not overstate research findings. Follow source copyright and summarization limits; do not bypass paywalls.
+
+## Access and update (no credentials in source)
+1. Get this linked Site via Sites get_site. Confirm it remains owner-private; if audience changed, stop and report the authorization mismatch.
+2. Acquire current service access from get_site's siwc_bypass_bearer_token. Send it ONLY to that exact current_live_url as OAI-Sites-Authorization: Bearer <token>. This is an identity-less platform-authorized private Site update. Never log or save the token, put it in arguments or include it in the automation message. If unavailable, report blocked access; do not fabricate or rotate it.
+3. GET /api/reading with that header to read the latest {article}. This gives the full JSON schema, an example and the previous edition.
+4. PUT /api/reading with the same header, Content-Type: application/json, X-LingoLoop-Update: reading-v1. Body is the article object directly (not wrapped). Fields: id (ASCII alphanumeric/hyphen, date + event slug), date (today Asia/Shanghai YYYY-MM-DD), eventDate, title, titleZh, level, selectionReason, paragraphs [{en,zh}], vocabulary [{word,meaning}], questions [{question,options:[string],answer:zero-based integer,explanation}], sources [{name,url,published:YYYY-MM-DD}], updatedAt (actual ISO timestamp), statusNote (learning adaptation and material freshness qualifications). Each edition is archived in R2 under reading/editions/YYYY-MM-DD.json and becomes reading/latest.json. Do not update the application source or seed for routine editions.
+5. GET /api/reading with cache disabled and verify id, date, title, sources and paragraph text match what was sent. A successful PUT alone is insufficient. On uncertain outcome, read back before retrying. Preserve earlier data on research failure. Report actual completion or blocker and link to the Site; never claim publication without verified readback.
+
+## Retrieving source instructions
+The linked Site source repository is accessible via Sites create_source_repository_write_credential and the Sites source helper (read Sites skill). Read this file from the latest repository revision if needed. No publisher credential is necessary to update content once service access is available.

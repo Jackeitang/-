@@ -1,0 +1,20 @@
+{
+  "id":"2026-11-06-pierre",
+  "date":"2026-11-06",
+  "eventDate":"2026-11-04",
+  "title":"Why AI Coding Needs More Than a Smart Model",
+  "titleZh":"AI 编程为什么不只需要聪明的模型？",
+  "level":"A2–B1",
+  "selectionReason":"这项拟议收购涉及 AI 编程从生成代码走向代码管理与审查，与你的 AI 和编程学习直接相关。它是本期编辑精选，不代表可客观验证的全网影响力第一。",
+  "paragraphs":[
+    {"en":"On November 4, OpenAI announced plans to acquire Pierre Computer Company. Pierre makes tools for storing, exploring and reviewing code. Some of its tools, including Trees and Diffs, are already used in the Codex app.","zh":"11 月 4 日，OpenAI 宣布计划收购 Pierre。该公司开发代码存储、浏览和审查工具，其中 Trees 和 Diffs 已用于 Codex。"},
+    {"en":"The announcement is about more than writing code. When people and AI agents work on a project together, they also need to understand what has changed. OpenAI wants to bring more of Pierre's technology into Codex.","zh":"这件事不只关乎写代码。人与 AI Agent 合作时，还需要理解代码发生了哪些变化。OpenAI 希望将 Pierre 的更多技术整合进 Codex。"},
+    {"en":"OpenAI says Pierre's open-source projects will stay open-source. However, the deal has not closed. It still needs to meet closing conditions, including regulatory approvals. Until then, the two companies remain separate.","zh":"OpenAI 表示相关开源项目将继续开源。但交易尚未交割，仍需满足包括监管批准在内的条件。在此之前，两家公司仍独立运营。"},
+    {"en":"A question for learners: if an AI writes a useful program, how would you check its changes before using it? Think about the difference between producing an answer and reviewing it carefully.","zh":"思考：如果 AI 写出了一个有用的程序，你会怎样在使用前检查改动？生成答案与认真审查答案，有什么区别？"}
+  ],
+  "vocabulary":[{"word":"acquire","meaning":"收购；获得"},{"word":"review","meaning":"审查；复核"},{"word":"open-source","meaning":"开源的"},{"word":"regulatory approval","meaning":"监管批准"},{"word":"remain separate","meaning":"保持独立"}],
+  "questions":[{"question":"Has the acquisition already closed?","options":["Yes, it is complete.","No, closing conditions still apply.","The article does not mention it."],"answer":1,"explanation":"第三段明确说交易尚未交割，仍需满足相关条件。"},{"question":"What does the announcement focus on besides writing code?","options":["Reviewing and managing code","Making phone screens","Teaching photography"],"answer":0,"explanation":"Pierre 的工具涉及代码存储、浏览和审查。"}],
+  "sources":[{"name":"OpenAI · 官方收购公告","url":"https://openai.com/index/openai-to-acquire-pierre/","published":"2026-11-04"}],
+  "updatedAt":"2026-11-06T00:20:00+08:00",
+  "statusNote":"首期精选：事件发生于 11 月 4 日。英文为学习改写，中文为辅助翻译，并非原文全文。"
+}

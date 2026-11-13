@@ -1,0 +1,10 @@
+{
+  "name": "lingoloop",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/test-models.mjs && node scripts/test-reading.mjs && node scripts/test-listening.mjs && node scripts/test-dictionary.mjs && node scripts/test-pet-progress.mjs && node scripts/test-listening-player.mjs"
+  },
+  "engines": { "node": ">=22" }
+}
