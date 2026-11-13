@@ -1,4 +1,4 @@
-// Private, owner-only Site. Dispatch authenticates all requests before this code.
+// Public Site: dispatch verifies identity; credentials are isolated by signed-in user.
 // Keys are encrypted in R2; the wrapping key exists only in Sites runtime secrets.
 const MODEL_PROVIDERS = {
  deepseek: {name:'DeepSeek', endpoint:'https://api.deepseek.com/chat/completions', model:'deepseek-flash'},
@@ -13,9 +13,19 @@ async function wrappingKey(env){
  if(!env.LINGOLOOP_KEY_ENCRYPTION)throw new ModelError('服务端密钥存储尚未配置。',503);
  return crypto.subtle.importKey('raw',decode64(env.LINGOLOOP_KEY_ENCRYPTION),'AES-GCM',false,['encrypt','decrypt']);
 }
-async function storedModel(env){
+function isSiteOwner(request,env){
+ const email=request.headers.get('oai-authenticated-user-email');
+ return !!request.headers.get('oai-authenticated-user-id')&&!!email&&!!env.LINGOLOOP_OWNER_EMAIL&&email.toLowerCase()===env.LINGOLOOP_OWNER_EMAIL.toLowerCase();
+}
+async function userConfigKey(request,env){
+ const id=sameOwner(request,null);
+ if(isSiteOwner(request,env))return MODEL_CONFIG_KEY;
+ const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(id));
+ return 'private/users/'+Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('')+'/model-v1.json';
+}
+async function storedModel(env,key=MODEL_CONFIG_KEY){
  if(!env.BUCKET)throw new ModelError('模型配置存储暂时不可用。',503);
- const obj=await env.BUCKET.get(MODEL_CONFIG_KEY);return obj?obj.json():null;
+ const obj=await env.BUCKET.get(key);return obj?obj.json():null;
 }
 async function encryptModelKey(key,env){
  const iv=crypto.getRandomValues(new Uint8Array(12));
@@ -63,12 +73,20 @@ async function callModel(cfg,key,messages,maxTokens=700){
 async function modelsApi(request,env){
  const path=new URL(request.url).pathname;
  try{
-  if(path==='/api/models/config'&&request.method==='GET')return modelJson({...modelStatus(await storedModel(env)),storageReady:!!env.LINGOLOOP_KEY_ENCRYPTION});
+  if(!request.headers.get('oai-authenticated-user-id')){
+   if(path==='/api/models/config'&&request.method==='GET')return modelJson({...modelStatus(null),loginRequired:true,storageReady:false});
+   throw new ModelError('请先登录，再连接你自己的模型。',401);
+  }
+  const configKey=await userConfigKey(request,env);
+  const old=await storedModel(env,configKey);
+  if(old)sameOwner(request,old);
+  if(path==='/api/models/config'&&request.method==='GET')return modelJson({...modelStatus(old),loginRequired:false,storageReady:!!env.LINGOLOOP_KEY_ENCRYPTION});
+  if(path==='/api/models/reading-draft'&&!isSiteOwner(request,env))throw new ModelError('仅站点所有者可以更新公共学习材料。',403);
   if(!['POST','DELETE'].includes(request.method))return modelJson({error:'Method not allowed'},405);
   checkMutation(request);
-  const old=await storedModel(env);
+
   if(path==='/api/models/config'&&request.method==='DELETE'){
-   sameOwner(request,old);await env.BUCKET.delete(MODEL_CONFIG_KEY);return modelJson(modelStatus(null));
+   sameOwner(request,old);await env.BUCKET.delete(configKey);return modelJson(modelStatus(null));
   }
   const body=await modelBody(request);
   if(path==='/api/models/config'&&request.method==='POST'){
@@ -81,7 +99,7 @@ async function modelsApi(request,env){
    if(!key||key.length>4096||/[\r\n]/.test(key))throw new ModelError('请输入该服务商的 API Key。');
    await callModel(cfg,key,[{role:'user',content:'Reply with just OK.'}],64);
    cfg.secret=await encryptModelKey(key,env);cfg.verifiedAt=new Date().toISOString();
-   await env.BUCKET.put(MODEL_CONFIG_KEY,JSON.stringify(cfg),{httpMetadata:{contentType:'application/json'}});
+   await env.BUCKET.put(configKey,JSON.stringify(cfg),{httpMetadata:{contentType:'application/json'}});
    return modelJson(modelStatus(cfg));
   }
   if(!old)throw new ModelError('请先在设置中验证并保存 DeepSeek 或 GLM 连接。',409);
@@ -91,7 +109,7 @@ async function modelsApi(request,env){
    return modelJson(await callModel(old,await decryptModelKey(old,env),body.messages));
   }
   if(path==='/api/models/reading-draft'&&request.method==='POST'){
-   // Service callers rely on the confirmed owner-private Site dispatch boundary.
+   // Shared drafts require the authenticated site owner, including on public Sites.
    // Research must be supplied by a verified-source runner; no model-made URLs.
    const r=body.research;
    const isDate=s=>typeof s==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s));

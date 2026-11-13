@@ -1,5 +1,9 @@
 # LingoLoop
 
+**公网网站已上线：[打开 LingoLoop](https://lingoloop-shun-1105.lishun9876.chatgpt.site/)。** 首页、阅读、听力和词典无需登录；AI 功能需登录并配置自己的模型 API Key。各用户的连接独立加密保存，费用由各自服务商账户承担。共享内容只允许站点所有者更新。公开访问实现与测试见 [PUBLIC_HOSTING.md](PUBLIC_HOSTING.md)，其权限说明取代下文及旧集成笔记中关于私有站点的假设。
+
+GitHub 保存源代码；完整网站托管于 Sites，并非 GitHub Pages。每日自动更新仍暂停。执行 `npm run build` 和 `npm test` 可完成构建与检查。
+
 英语学习网站：口语对话、CBS 真人新闻听力、写作练习、AI 每日阅读、点词查询和学习记录。
 
 ## 项目结构

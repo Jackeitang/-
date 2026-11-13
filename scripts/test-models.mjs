@@ -3,10 +3,10 @@ import fs from 'node:fs/promises';
 import {webcrypto} from 'node:crypto';
 const files=await Promise.all(['worker/models.js','worker/runtime.js'].map(f=>fs.readFile(f,'utf8')));
 const records=new Map();let calls=[],upstreamStatus=200;
-const env={LINGOLOOP_KEY_ENCRYPTION:Buffer.alloc(32,7).toString('base64'),BUCKET:{get:async k=>records.has(k)?{json:async()=>JSON.parse(records.get(k))}:null,put:async(k,v)=>records.set(k,v),delete:async k=>records.delete(k)}};
+const env={LINGOLOOP_OWNER_EMAIL:'owner@test.example',LINGOLOOP_KEY_ENCRYPTION:Buffer.alloc(32,7).toString('base64'),BUCKET:{get:async k=>records.has(k)?{json:async()=>JSON.parse(records.get(k))}:null,put:async(k,v)=>records.set(k,v),delete:async k=>records.delete(k)}};
 const fakeFetch=async(url,options)=>{calls.push({url,options});return new Response(JSON.stringify(upstreamStatus===200?{choices:[{message:{content:'OK'},finish_reason:'stop'}],usage:{total_tokens:3}}:{error:{message:'DO-NOT-REFLECT-SECRET'}}),{status:upstreamStatus});};
 const worker=new Function('crypto','fetch','SEED','LISTENING_SEED','ASSETS','DICTIONARY',files[0]+'\n'+files[1].replace('export default','return'))(webcrypto,fakeFetch,{},{},{},{});
-async function request(path,method='GET',body,headers={}){return worker.fetch(new Request('https://example.test'+path,{method,headers:{'Content-Type':'application/json','X-LingoLoop-Model':'model-v1','oai-authenticated-user-id':'owner-test',...headers},...(body===undefined?{}:{body:JSON.stringify(body)})}),env);}
+async function request(path,method='GET',body,headers={}){return worker.fetch(new Request('https://example.test'+path,{method,headers:{'Content-Type':'application/json','X-LingoLoop-Model':'model-v1','oai-authenticated-user-id':'owner-test','oai-authenticated-user-email':'owner@test.example',...headers},...(body===undefined?{}:{body:JSON.stringify(body)})}),env);}
 assert.equal((await (await request('/api/models/config')).json()).configured,false);
 assert.equal((await request('/api/models/config','POST',{provider:'deepseek',model:'deepseek-flash',key:'fixture-key'},{Origin:'https://evil.test'})).status,403);
 assert.equal(calls.length,0);
@@ -18,7 +18,7 @@ assert.equal(calls.at(-1).url,'https://api.deepseek.com/chat/completions');
 assert(![...records.values()].join('').includes('fixture-key'),'stored key must be encrypted');
 assert.equal(JSON.parse(status).automaticUpdates.enabled,false);
 await request('/api/models/chat','POST',{messages:[{role:'user',content:'Hi'}]});assert.equal(calls.at(-1).options.headers.Authorization,'Bearer fixture-key');
-assert.equal((await request('/api/models/chat','POST',{messages:[{role:'user',content:'Hi'}]},{'oai-authenticated-user-id':'other'})).status,403);
+assert.equal((await request('/api/models/chat','POST',{messages:[{role:'user',content:'Hi'}]},{'oai-authenticated-user-id':'other','oai-authenticated-user-email':'other@test.example'})).status,409);
 upstreamStatus=401;r=await request('/api/models/config','POST',{provider:'glm',model:'glm-5.3-flash',key:'other-fixture-key'});
 assert.equal(r.status,502);assert(!(await r.text()).includes('DO-NOT-REFLECT-SECRET'));
 assert.equal((await (await request('/api/models/config')).json()).provider,'deepseek','failed replacement must preserve working config');

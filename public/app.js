@@ -114,10 +114,10 @@ async function modelRequest(path,body,method='POST'){
  let data;try{data=await response.json()}catch{throw Error('无法读取模型服务响应，请确认已登录网站。')}
  if(!response.ok)throw Error(data.error||'模型连接失败，请稍后重试。');return data;
 }
-function useModelStatus(data){savedModel=data.configured?data:null;if(!connection||connection.server)connection=savedModel?{server:true,provider:data.provider,model:data.model}:null;const status=$('#auto-update-status');if(status)status.textContent='每日自动更新：'+(data.automaticUpdates?.message||'已暂停。');}
+function useModelStatus(data){$('#model-login').hidden=!data.loginRequired;$('#model-logout').hidden=!!data.loginRequired;savedModel=data.configured?data:null;if(!connection||connection.server)connection=savedModel?{server:true,provider:data.provider,model:data.model}:null;const status=$('#auto-update-status');if(status)status.textContent='每日自动更新：'+(data.automaticUpdates?.message||'已暂停。');}
 async function refreshModel(){try{const r=await fetch('/api/models/config',{cache:'no-store'});if(!r.ok)throw Error();const d=await r.json();useModelStatus(d);return d}catch{return null}}
 function modelFields(provider,model){const preset=modelPresets[provider];$('#provider').value=provider;$('#endpoint').readOnly=!!preset;$('#endpoint').value=preset?.endpoint||connection?.endpoint||'';$('#model').value=model||preset?.model||'';$('#api-key').value='';$('#api-key').placeholder=savedModel?.provider===provider?'留空可沿用已保存的密钥':'首次连接请输入 API Key';$('#model-help').textContent=preset?'密钥加密保存在服务端，不回传到页面。验证会发送一条简短请求，可能产生少量 API 费用。请使用开放平台的标准 API Key。':'自定义接口只保留在本次页面内存中，刷新即清除，不用于后台更新；服务需要支持浏览器跨域访问。';$('#save-model').textContent=preset?'验证并保存连接':'验证并连接本次会话';}
-async function openSettings(){renderVoicePicker();$('#settings-dialog').showModal();$('#settings-status').textContent='正在读取连接状态…';const data=await refreshModel();if(modelSaving)return;modelFields(connection?.server?connection.provider:connection?'custom':savedModel?.provider||'deepseek',connection?.model||savedModel?.model);$('#settings-status').textContent=data?(savedModel?'已验证并保存 '+savedModel.model+' · '+new Date(savedModel.verifiedAt).toLocaleString('zh-CN'):'尚未保存模型连接。'):'连接状态读取失败，请稍后重试。';}
+async function openSettings(){renderVoicePicker();$('#settings-dialog').showModal();$('#settings-status').textContent='正在读取连接状态…';const data=await refreshModel();if(modelSaving)return;modelFields(connection?.server?connection.provider:connection?'custom':savedModel?.provider||'deepseek',connection?.model||savedModel?.model);$('#settings-status').textContent=data?(savedModel?'已验证并保存 '+savedModel.model+' · '+new Date(savedModel.verifiedAt).toLocaleString('zh-CN'):(data.loginRequired?'登录后可保存你自己的模型连接；阅读、听力与基础练习无需登录。':'尚未保存模型连接。')):'连接状态读取失败，请稍后重试。';}
 $('#settings').onclick=openSettings;$('#mobile-settings').onclick=openSettings;$('#close-settings').onclick=()=>{if(!modelSaving){$('#api-key').value='';$('#settings-dialog').close()}};
 $('#settings-dialog').addEventListener('cancel',e=>{if(modelSaving)e.preventDefault();else $('#api-key').value=''});
 $('#provider').onchange=()=>modelFields($('#provider').value);
@@ -134,7 +134,7 @@ $('#disconnect').onclick=async()=>{if(modelSaving)return;modelSaving=true;$('#di
 $$('[data-page]').forEach(b=>b.onclick=()=>navigate(b.dataset.page));updateStreak();navigate('home');
 refreshModel().then(()=>{if(connection?.server&&['speak','write'].includes(page)&&!busy){if(page==='speak'&&conversation.length<=1)renderSpeak();else if(page==='write')renderWrite();}});
 
-if(new URLSearchParams(location.search).get('voices')==='1')openSettings();
+if(new URLSearchParams(location.search).get('voices')==='1'||new URLSearchParams(location.search).get('settings')==='models')openSettings();
 
 async function renderReading(){
  const current=generation;$('#main').innerHTML=heading('AI DAILY READING','读懂英语，也读懂 AI。','每天一篇重要 AI 事件，用真实世界的变化练习阅读。')+'<div class="panel" role="status">正在获取最新一期…</div>';

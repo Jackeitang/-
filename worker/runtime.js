@@ -12,6 +12,7 @@ function validListening(a){
 export default {async fetch(request,env){
  const url=new URL(request.url),path=url.pathname;
  if(path.startsWith('/api/models/'))return modelsApi(request,env);
+ if(request.method==='PUT'&&['/api/reading','/api/listening'].includes(path)&&!isSiteOwner(request,env))return json({error:'Only the signed-in site owner may update shared content'},403);
  if(path==='/api/listening'){
   if(request.method==='GET'){
    try{const obj=env.BUCKET?await env.BUCKET.get('listening/latest.json'):null;return json({episode:obj?await obj.json():LISTENING_SEED})}catch{return json({error:'Listening storage unavailable'},503)}
@@ -54,7 +55,7 @@ export default {async fetch(request,env){
    try{const obj=env.BUCKET?await env.BUCKET.get('reading/latest.json'):null;return json({article:obj?await obj.json():SEED});}catch{return json({error:'Reading storage unavailable'},503)}
   }
   if(request.method==='PUT'){
-   // Private Site dispatch authenticates visitors/service callers before this Worker.
+   // Public writes require verified owner identity above.
    // Also block browser cross-origin requests; no CORS access is granted.
    if(request.headers.get('Origin')&&request.headers.get('Origin')!==url.origin)return json({error:'Cross-origin write denied'},403);
    if(request.headers.get('X-LingoLoop-Update')!=='reading-v1'||!request.headers.get('Content-Type')?.includes('application/json'))return json({error:'Expected reading update request'},400);
